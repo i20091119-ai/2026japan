@@ -1,0 +1,1139 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>초등발명반 출석 체크</title>
+<style>
+  :root {
+    --bg: #F6F7F9;
+    --card: #FFFFFF;
+    --ink: #1E2530;
+    --sub: #6B7482;
+    --line: #E3E6EB;
+    --boy: #2E6BB4;
+    --boy-soft: #EAF1F9;
+    --girl: #C2527E;
+    --girl-soft: #FAEEF3;
+    --done: #178A5C;
+    --done-soft: #E8F5EF;
+    --chip-bg: #FFFFFF;
+    --chip-on: #1E2530;
+    --chip-on-text: #FFFFFF;
+    --danger: #B4462E;
+    --scrim: rgba(20, 28, 40, 0.45);
+    --shadow: 0 1px 3px rgba(20, 28, 40, 0.07);
+    --shadow-pop: 0 12px 32px rgba(20, 28, 40, 0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181E;
+      --card: #1D232C;
+      --ink: #E8ECF1;
+      --sub: #97A0AD;
+      --line: #2C333E;
+      --boy: #6FA5DE;
+      --boy-soft: #1E2A3A;
+      --girl: #DE86AB;
+      --girl-soft: #33222B;
+      --done: #4CC392;
+      --done-soft: #1B2F27;
+      --chip-bg: #1D232C;
+      --chip-on: #E8ECF1;
+      --chip-on-text: #14181E;
+      --danger: #E07B5F;
+      --scrim: rgba(0, 0, 0, 0.6);
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14181E;
+    --card: #1D232C;
+    --ink: #E8ECF1;
+    --sub: #97A0AD;
+    --line: #2C333E;
+    --boy: #6FA5DE;
+    --boy-soft: #1E2A3A;
+    --girl: #DE86AB;
+    --girl-soft: #33222B;
+    --done: #4CC392;
+    --done-soft: #1B2F27;
+    --chip-bg: #1D232C;
+    --chip-on: #E8ECF1;
+    --chip-on-text: #14181E;
+    --danger: #E07B5F;
+    --scrim: rgba(0, 0, 0, 0.6);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 90px;
+  }
+
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 16px 10px;
+  }
+  .top-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  h1 small {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sub);
+    margin-left: 6px;
+  }
+  .count {
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--done);
+    white-space: nowrap;
+  }
+  .count .total { color: var(--sub); font-weight: 600; }
+
+  .sheet-row {
+    display: flex;
+    gap: 6px;
+    max-width: 640px;
+    margin: 8px auto 0;
+    align-items: stretch;
+  }
+  .sheet-btn {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: var(--shadow);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sheet-btn:focus-visible, .new-btn:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
+  .sheet-btn .s-date {
+    flex: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sub);
+    font-variant-numeric: tabular-nums;
+  }
+  .sheet-btn .s-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sheet-btn .s-name.none { color: var(--sub); font-weight: 500; }
+  .sheet-btn svg { flex: none; color: var(--sub); }
+  .new-btn {
+    flex: none;
+    border: 1px solid var(--done);
+    background: var(--done-soft);
+    color: var(--done);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sched-btn {
+    flex: none;
+    border: 1px solid var(--boy);
+    background: var(--boy-soft);
+    color: var(--boy);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sched-btn:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
+
+  .bar {
+    max-width: 640px;
+    margin: 8px auto 10px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--done);
+    border-radius: 3px;
+    transition: width 0.25s ease;
+  }
+  .controls {
+    display: flex;
+    gap: 6px;
+    max-width: 640px;
+    margin: 0 auto;
+    align-items: center;
+  }
+  .chips { display: flex; gap: 6px; flex: 1; }
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--chip-bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip.on {
+    background: var(--chip-on);
+    color: var(--chip-on-text);
+    border-color: var(--chip-on);
+  }
+  #q {
+    width: 84px;
+    min-width: 0;
+    border: 1px solid var(--line);
+    background: var(--chip-bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    outline: none;
+  }
+  #q:focus { border-color: var(--sub); }
+  #q::placeholder { color: var(--sub); }
+
+  main { max-width: 640px; margin: 0 auto; padding: 4px 16px 16px; }
+
+  .room-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 18px 2px 8px;
+  }
+  .room-num {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+  .room-head.boy .room-num { color: var(--boy); }
+  .room-head.girl .room-num { color: var(--girl); }
+  .room-meta { font-size: 12px; color: var(--sub); font-weight: 500; }
+  .room-count {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sub);
+    font-variant-numeric: tabular-nums;
+  }
+  .room-count.full { color: var(--done); }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font: inherit;
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card:active { transform: scale(0.99); }
+  .card:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
+  .card.checked {
+    background: var(--done-soft);
+    border-color: var(--done);
+  }
+  .tick {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card.boy .tick { border-color: var(--boy); background: var(--boy-soft); }
+  .card.girl .tick { border-color: var(--girl); background: var(--girl-soft); }
+  .card.checked .tick { border-color: var(--done); background: var(--done); }
+  .tick svg { display: none; }
+  .card.checked .tick svg { display: block; }
+
+  .info { flex: 1; min-width: 0; }
+  .name { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .card.checked .name { color: var(--done); }
+  .detail { font-size: 12.5px; color: var(--sub); margin-top: 2px; }
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+    vertical-align: 1px;
+  }
+  .badge.mixed { background: var(--boy-soft); color: var(--boy); }
+  .time {
+    flex: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--done);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--sub);
+    font-size: 14px;
+    padding: 48px 0;
+  }
+  .empty-start {
+    text-align: center;
+    padding: 64px 16px;
+    color: var(--sub);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .empty-start .big-new {
+    display: inline-block;
+    margin-top: 14px;
+    border: 1px solid var(--done);
+    background: var(--done-soft);
+    color: var(--done);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  .foot {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .foot-in {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .missing {
+    flex: 1;
+    font-size: 12.5px;
+    color: var(--sub);
+    line-height: 1.45;
+    overflow: hidden;
+  }
+  .missing b { color: var(--ink); font-weight: 700; }
+  .missing.done-all { color: var(--done); font-weight: 700; font-size: 14px; }
+  #reset {
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--sub);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  #reset:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--scrim);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .overlay[hidden] { display: none; }
+  .panel {
+    width: 100%;
+    max-width: 640px;
+    max-height: 82vh;
+    background: var(--bg);
+    border-radius: 18px 18px 0 0;
+    box-shadow: var(--shadow-pop);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .panel-title { font-size: 16px; font-weight: 800; }
+  .panel-close {
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--sub);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .panel-close:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
+  .panel-body { overflow-y: auto; padding: 8px 16px 16px; }
+
+  .day-head {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--sub);
+    margin: 14px 2px 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sheet-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 6px 6px 6px 14px;
+    margin-bottom: 6px;
+    box-shadow: var(--shadow);
+  }
+  .sheet-item.active { border-color: var(--done); background: var(--done-soft); }
+  .sheet-open {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    padding: 8px 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sheet-open:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; border-radius: 6px; }
+  .si-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .si-time { flex: none; font-size: 12px; color: var(--sub); font-variant-numeric: tabular-nums; }
+  .si-count {
+    flex: none;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--sub);
+    font-variant-numeric: tabular-nums;
+  }
+  .si-count.full { color: var(--done); }
+  .si-del {
+    flex: none;
+    border: 0;
+    background: none;
+    color: var(--sub);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .si-del:focus-visible { outline: 2px solid var(--danger); outline-offset: 1px; }
+  .panel-empty { text-align: center; color: var(--sub); font-size: 13.5px; padding: 32px 0; }
+
+  .sd-day {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 2px 8px;
+  }
+  .sd-day-title { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .sd-today {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--done);
+    background: var(--done-soft);
+    border: 1px solid var(--done);
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .sd-day-route { font-size: 11.5px; color: var(--sub); font-weight: 500; margin-left: auto; }
+  .sd-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 8px 9px 12px;
+    margin-bottom: 5px;
+    box-shadow: var(--shadow);
+  }
+  .sd-time {
+    flex: none;
+    width: 42px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--sub);
+    font-variant-numeric: tabular-nums;
+  }
+  .sd-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+  .sd-sub { display: block; font-size: 11px; font-weight: 500; color: var(--sub); }
+  .sd-add {
+    flex: none;
+    border: 1px solid var(--done);
+    background: var(--done-soft);
+    color: var(--done);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sd-add:focus-visible { outline: 2px solid var(--boy); outline-offset: 1px; }
+  .sd-note { font-size: 11.5px; color: var(--sub); text-align: center; padding: 12px 0 4px; line-height: 1.5; white-space: pre-line; }
+
+  .dialog-wrap { align-items: center; padding: 16px; }
+  .dialog {
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg);
+    border-radius: 18px;
+    box-shadow: var(--shadow-pop);
+    padding: 18px 16px 16px;
+  }
+  .dlg-title { font-size: 16px; font-weight: 800; }
+  .dlg-date {
+    font-size: 12.5px;
+    color: var(--sub);
+    margin-top: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 14px 0 12px;
+  }
+  .preset {
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 8px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .preset:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
+  .dlg-row { display: flex; gap: 8px; }
+  #sheetName {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    outline: none;
+  }
+  #sheetName:focus { border-color: var(--sub); }
+  #sheetName::placeholder { color: var(--sub); }
+  #createBtn {
+    flex: none;
+    border: 1px solid var(--done);
+    background: var(--done);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  #createBtn:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
+  .dlg-cancel {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    border: 0;
+    background: none;
+    color: var(--sub);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px;
+    cursor: pointer;
+  }
+  .dlg-cancel:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; border-radius: 6px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bar i { transition: none; }
+    .card:active { transform: none; }
+  }
+</style>
+
+<header class="top">
+  <div class="top-row">
+    <h1>초등발명반 출석 체크<small>해외체험학습 8/10~8/12 · 1호차</small></h1>
+    <div class="count"><span id="n">0</span><span class="total">/<span id="t">0</span></span></div>
+  </div>
+  <div class="sheet-row">
+    <button id="sheetBtn" class="sheet-btn" type="button" aria-haspopup="dialog">
+      <span class="s-date" id="sDate"></span>
+      <span class="s-name none" id="sName">체크표 없음</span>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button id="schedBtn" class="sched-btn" type="button">일정</button>
+    <button id="newBtn" class="new-btn" type="button">＋ 새 체크표</button>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="controls">
+    <div class="chips" id="chips">
+      <button class="chip on" data-f="all" type="button">전체</button>
+      <button class="chip" data-f="todo" type="button">미확인</button>
+      <button class="chip" data-f="boy" type="button">남</button>
+      <button class="chip" data-f="girl" type="button">여</button>
+    </div>
+    <input id="q" type="search" placeholder="이름 검색" autocomplete="off">
+  </div>
+</header>
+
+<main id="list"></main>
+
+<footer class="foot" id="foot">
+  <div class="foot-in">
+    <div class="missing" id="missing"></div>
+    <button id="reset" type="button">전체 해제</button>
+  </div>
+</footer>
+
+<div class="overlay" id="panelOv" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-label="체크표 기록">
+    <div class="panel-head">
+      <div class="panel-title">체크표 기록</div>
+      <button class="panel-close" id="panelClose" type="button">닫기</button>
+    </div>
+    <div class="panel-body" id="sheetList"></div>
+  </div>
+</div>
+
+<div class="overlay" id="schedOv" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-label="여행 일정">
+    <div class="panel-head">
+      <div class="panel-title">여행 일정 <span style="font-weight:500;font-size:12px;color:var(--sub)">8/10~8/12 · 숙소: 빌라 퐁텐 그랜드 아리아케</span></div>
+      <button class="panel-close" id="schedClose" type="button">닫기</button>
+    </div>
+    <div class="panel-body" id="schedList"></div>
+  </div>
+</div>
+
+<div class="overlay dialog-wrap" id="newOv" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="새 체크표 만들기">
+    <div class="dlg-title">새 체크표</div>
+    <div class="dlg-date" id="dlgDate"></div>
+    <div class="presets" id="presets"></div>
+    <div class="dlg-row">
+      <input id="sheetName" type="text" placeholder="직접 입력 (예: 박물관 도착)" autocomplete="off" enterkeyhint="done">
+      <button id="createBtn" type="button">만들기</button>
+    </div>
+    <button class="dlg-cancel" id="newCancel" type="button">취소</button>
+  </div>
+</div>
+
+<script>
+  // [이름, 학교, 학년, 방번호, 성별, 룸메이트가 수학과학반인 경우 그 이름]
+  const STUDENTS = [
+    ["김강현", "창녕초", "초5", 705, "boy", null],
+    ["김범준", "창녕초", "초5", 705, "boy", null],
+    ["우주원", "창녕초", "초5", 707, "boy", "조정민"],
+    ["서진",   "창녕초", "초6", 709, "boy", null],
+    ["조찬우", "창녕초", "초6", 709, "boy", null],
+    ["황현종", "창녕초", "초6", 711, "boy", null],
+    ["빈서진", "창녕초", "초6", 711, "boy", null],
+    ["함진우", "창녕초", "초6", 713, "boy", "김민찬"],
+    ["정우빈", "명덕초", "초6", 715, "boy", null],
+    ["최승빈", "명덕초", "초6", 715, "boy", null],
+    ["황태준", "명덕초", "초6", 721, "boy", "김민재"],
+    ["김세은", "창녕초", "초5", 801, "girl", null],
+    ["김연아", "창녕초", "초5", 801, "girl", null],
+    ["강다영", "남지초", "초6", 807, "girl", null],
+    ["박윤진", "남지초", "초6", 807, "girl", null],
+    ["김지우", "창녕초", "초6", 809, "girl", null],
+    ["임현서", "창녕초", "초6", 809, "girl", null],
+    ["박서율", "이방초", "초6", 811, "girl", "나연서"],
+    ["최윤서", "창녕초", "초6", 813, "girl", null],
+    ["김연지", "영산초", "초6", 813, "girl", null],
+  ];
+
+  const PRESETS = ["아침 점호", "저녁 점호", "식사", "버스 탑승", "집합", "숙소 복귀"];
+
+  // 여행 일정 (2026 영재교육원 해외현장체험학습 일정표 기준)
+  // 항목: [시간, 체크표용 이름, 부가 설명(없으면 null)]
+  const ITINERARY = [
+    {
+      date: "2026-08-10", day: "제1일", route: "창녕 → 부산 → 나리타 → 도쿄",
+      items: [
+        ["05:00", "교육지원청 집결", "공항으로 이동 (1시간)"],
+        ["06:00", "김해공항 출국 수속", null],
+        ["07:55", "김해공항 출발", "LJ221 · 비행 2시간"],
+        ["10:05", "나리타 입국 수속", "도쿄로 이동 (1시간)"],
+        ["12:30", "중식", null],
+        ["13:30", "국립과학박물관", null],
+        ["15:00", "아사쿠사", "센소지 · 나카미세도리"],
+        ["16:00", "스카이트리 전망대", "오다이바 문화탐방"],
+        ["17:30", "석식", "후 호텔로 이동"],
+        ["19:30", "호텔 체크인", "휴식"],
+      ],
+    },
+    {
+      date: "2026-08-11", day: "제2일", route: "도쿄 (디즈니랜드)",
+      items: [
+        ["08:00", "호텔 조식", null],
+        ["09:00", "디즈니랜드 이동", null],
+        ["09:30", "디즈니랜드 입장", "조별 자유 투어"],
+        ["17:00", "디즈니랜드 퇴장", "아키하바라로 이동"],
+        ["18:00", "석식", null],
+        ["19:30", "호텔 복귀", "투숙 및 휴식"],
+      ],
+    },
+    {
+      date: "2026-08-12", day: "제3일", route: "도쿄 → 나리타 → 김해 → 창녕",
+      items: [
+        ["08:00", "호텔 조식", "후 이동"],
+        ["09:00", "도쿄대 캠퍼스 투어", "한국인 재학생 안내"],
+        ["10:30", "국립박물관 동양관", "창녕지역 유물 관람"],
+        ["12:30", "중식", null],
+        ["14:00", "나리타공항 이동", "1시간 소요"],
+        ["17:10", "나리타공항 출발", "비행 2시간 40분"],
+        ["18:55", "김해공항 입국 수속", null],
+        ["19:40", "창녕으로 이동", "1시간 소요"],
+        ["20:40", "영재교육원 도착", "해산"],
+      ],
+    },
+  ];
+  const KEY = "invention-attendance-v2";
+
+  let db = { sheets: [], activeId: null };
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY));
+    if (raw && Array.isArray(raw.sheets)) db = raw;
+  } catch (e) { /* 손상된 저장 데이터는 무시하고 새로 시작 */ }
+
+  let filter = "all";
+  let query = "";
+
+  const save = () => localStorage.setItem(KEY, JSON.stringify(db));
+  const active = () => db.sheets.find((s) => s.id === db.activeId) || null;
+
+  const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+  const todayStr = () => {
+    const d = new Date();
+    return d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+  };
+  const fmtDate = (iso) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return m + "/" + d + " (" + DOW[new Date(y, m - 1, d).getDay()] + ")";
+  };
+  const fmtTime = (ts) => {
+    const d = new Date(ts);
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  };
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  const listEl = document.getElementById("list");
+  const footEl = document.getElementById("foot");
+
+  function createSheet(name) {
+    const trimmed = (name || "").trim();
+    const sheet = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: trimmed || "점호",
+      date: todayStr(),
+      createdAt: Date.now(),
+      checks: {},
+    };
+    db.sheets.push(sheet);
+    db.activeId = sheet.id;
+    save();
+  }
+
+  function render() {
+    const sheet = active();
+
+    const sDateEl = document.getElementById("sDate");
+    const sNameEl = document.getElementById("sName");
+    if (sheet) {
+      sDateEl.textContent = fmtDate(sheet.date);
+      sNameEl.textContent = sheet.name;
+      sNameEl.classList.remove("none");
+    } else {
+      sDateEl.textContent = "";
+      sNameEl.textContent = "체크표 없음";
+      sNameEl.classList.add("none");
+    }
+
+    listEl.innerHTML = "";
+
+    if (!sheet) {
+      listEl.innerHTML =
+        '<div class="empty-start">일정마다 체크표를 만들어 출석을 확인하세요.<br>' +
+        "날짜는 자동으로 기록됩니다.<br>" +
+        '<button class="big-new" id="startNew" type="button">＋ 첫 체크표 만들기</button></div>';
+      document.getElementById("startNew").addEventListener("click", openNewDialog);
+      document.getElementById("n").textContent = 0;
+      document.getElementById("t").textContent = STUDENTS.length;
+      document.getElementById("bar").style.width = "0%";
+      footEl.style.display = "none";
+      return;
+    }
+    footEl.style.display = "";
+
+    const state = sheet.checks;
+    const visible = STUDENTS.filter(([name, , , , sex]) => {
+      if (query && !name.includes(query)) return false;
+      if (filter === "todo") return !state[name];
+      if (filter === "boy" || filter === "girl") return sex === filter;
+      return true;
+    });
+
+    if (!visible.length) {
+      listEl.innerHTML = '<div class="empty">해당하는 학생이 없습니다</div>';
+    }
+
+    let currentRoom = null;
+    visible.forEach(([name, school, grade, room, sex, roommate]) => {
+      if (room !== currentRoom) {
+        currentRoom = room;
+        const roomStudents = STUDENTS.filter((s) => s[3] === room);
+        const done = roomStudents.filter((s) => state[s[0]]).length;
+        const head = document.createElement("div");
+        head.className = "room-head " + sex;
+        head.innerHTML =
+          '<span class="room-num">' + room + "호</span>" +
+          '<span class="room-meta">' + (sex === "boy" ? "7층 · 남" : "8층 · 여") + "</span>" +
+          '<span class="room-count' + (done === roomStudents.length ? " full" : "") + '">' +
+          done + "/" + roomStudents.length + "</span>";
+        listEl.appendChild(head);
+      }
+
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "card " + sex + (state[name] ? " checked" : "");
+      card.setAttribute("aria-pressed", state[name] ? "true" : "false");
+      card.innerHTML =
+        '<span class="tick"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="info"><span class="name">' + name + "</span>" +
+        (roommate ? '<span class="badge mixed">룸메이트 ' + roommate + '(수학과학반)</span>' : "") +
+        '<div class="detail">' + school + " · " + grade + " · " + room + "호</div></span>" +
+        (state[name] ? '<span class="time">' + fmtTime(state[name]) + "</span>" : "");
+      card.addEventListener("click", () => {
+        if (state[name]) delete state[name];
+        else state[name] = Date.now();
+        save();
+        render();
+      });
+      listEl.appendChild(card);
+    });
+
+    const done = STUDENTS.filter((s) => state[s[0]]).length;
+    document.getElementById("n").textContent = done;
+    document.getElementById("t").textContent = STUDENTS.length;
+    document.getElementById("bar").style.width = (done / STUDENTS.length) * 100 + "%";
+
+    const missingEl = document.getElementById("missing");
+    const missing = STUDENTS.filter((s) => !state[s[0]]).map((s) => s[0]);
+    if (!missing.length) {
+      missingEl.className = "missing done-all";
+      missingEl.textContent = "전원 확인 완료 ✓";
+    } else {
+      missingEl.className = "missing";
+      missingEl.innerHTML = "<b>미확인 " + missing.length + "명</b> · " + missing.join(", ");
+    }
+  }
+
+  function renderSheetList() {
+    const box = document.getElementById("sheetList");
+    box.innerHTML = "";
+    if (!db.sheets.length) {
+      box.innerHTML = '<div class="panel-empty">아직 만든 체크표가 없습니다</div>';
+      return;
+    }
+    const sorted = db.sheets.slice().sort((a, b) => b.createdAt - a.createdAt);
+    let currentDate = null;
+    sorted.forEach((sheet) => {
+      if (sheet.date !== currentDate) {
+        currentDate = sheet.date;
+        const head = document.createElement("div");
+        head.className = "day-head";
+        head.textContent = fmtDate(sheet.date);
+        box.appendChild(head);
+      }
+      const done = Object.keys(sheet.checks).length;
+      const row = document.createElement("div");
+      row.className = "sheet-item" + (sheet.id === db.activeId ? " active" : "");
+
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "sheet-open";
+      open.innerHTML =
+        '<span class="si-name">' + esc(sheet.name) + "</span>" +
+        '<span class="si-time">' + fmtTime(sheet.createdAt) + "</span>" +
+        '<span class="si-count' + (done === STUDENTS.length ? " full" : "") + '">' +
+        done + "/" + STUDENTS.length + "</span>";
+      open.addEventListener("click", () => {
+        db.activeId = sheet.id;
+        save();
+        closePanel();
+        render();
+      });
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "si-del";
+      del.textContent = "삭제";
+      del.setAttribute("aria-label", sheet.name + " 체크표 삭제");
+      del.addEventListener("click", () => {
+        if (!confirm('"' + fmtDate(sheet.date) + " " + sheet.name + '" 체크표를 삭제할까요?\n체크 기록도 함께 지워집니다.')) return;
+        db.sheets = db.sheets.filter((s) => s.id !== sheet.id);
+        if (db.activeId === sheet.id) {
+          const rest = db.sheets.slice().sort((a, b) => b.createdAt - a.createdAt);
+          db.activeId = rest.length ? rest[0].id : null;
+        }
+        save();
+        renderSheetList();
+        render();
+      });
+
+      row.appendChild(open);
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+
+  function renderSchedule() {
+    const box = document.getElementById("schedList");
+    box.innerHTML = "";
+    const today = todayStr();
+    let todayHead = null;
+
+    ITINERARY.forEach((day) => {
+      const isToday = day.date === today;
+      const head = document.createElement("div");
+      head.className = "sd-day";
+      head.innerHTML =
+        '<span class="sd-day-title">' + day.day + " · " + fmtDate(day.date) + "</span>" +
+        (isToday ? '<span class="sd-today">오늘</span>' : "") +
+        '<span class="sd-day-route">' + day.route + "</span>";
+      box.appendChild(head);
+      if (isToday) todayHead = head;
+
+      day.items.forEach(([time, name, sub]) => {
+        const row = document.createElement("div");
+        row.className = "sd-item";
+
+        const info = document.createElement("span");
+        info.className = "sd-name";
+        info.textContent = name;
+        if (sub) {
+          const s = document.createElement("span");
+          s.className = "sd-sub";
+          s.textContent = sub;
+          info.appendChild(s);
+        }
+
+        const t = document.createElement("span");
+        t.className = "sd-time";
+        t.textContent = time;
+
+        const add = document.createElement("button");
+        add.type = "button";
+        add.className = "sd-add";
+        add.textContent = "＋ 체크";
+        add.setAttribute("aria-label", name + " 체크표 만들기");
+        add.addEventListener("click", () => {
+          createSheet(name);
+          closeSched();
+          closePanel();
+          render();
+        });
+
+        row.appendChild(t);
+        row.appendChild(info);
+        row.appendChild(add);
+        box.appendChild(row);
+      });
+    });
+
+    const note = document.createElement("div");
+    note.className = "sd-note";
+    note.textContent = "＋ 체크를 누르면 그 일정 이름으로 새 체크표가 만들어집니다.\n현지 사정과 교육청 협의에 의해 일정이 변경될 수 있습니다.";
+    box.appendChild(note);
+
+    if (todayHead) requestAnimationFrame(() => todayHead.scrollIntoView({ block: "start" }));
+  }
+
+  const panelOv = document.getElementById("panelOv");
+  const newOv = document.getElementById("newOv");
+  const schedOv = document.getElementById("schedOv");
+
+  function openSched() {
+    renderSchedule();
+    schedOv.hidden = false;
+  }
+  function closeSched() { schedOv.hidden = true; }
+
+  function openPanel() {
+    renderSheetList();
+    panelOv.hidden = false;
+  }
+  function closePanel() { panelOv.hidden = true; }
+
+  function openNewDialog() {
+    document.getElementById("dlgDate").textContent = fmtDate(todayStr()) + " · 날짜는 자동 기록됩니다";
+    const input = document.getElementById("sheetName");
+    input.value = "";
+    newOv.hidden = false;
+    input.focus();
+  }
+  function closeNewDialog() { newOv.hidden = true; }
+
+  const presetsBox = document.getElementById("presets");
+  PRESETS.forEach((p) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "preset";
+    b.textContent = p;
+    b.addEventListener("click", () => {
+      createSheet(p);
+      closeNewDialog();
+      closePanel();
+      render();
+    });
+    presetsBox.appendChild(b);
+  });
+
+  document.getElementById("createBtn").addEventListener("click", () => {
+    createSheet(document.getElementById("sheetName").value);
+    closeNewDialog();
+    closePanel();
+    render();
+  });
+  document.getElementById("sheetName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("createBtn").click();
+  });
+  document.getElementById("newCancel").addEventListener("click", closeNewDialog);
+  document.getElementById("newBtn").addEventListener("click", openNewDialog);
+  document.getElementById("sheetBtn").addEventListener("click", openPanel);
+  document.getElementById("panelClose").addEventListener("click", closePanel);
+  document.getElementById("schedBtn").addEventListener("click", openSched);
+  document.getElementById("schedClose").addEventListener("click", closeSched);
+  panelOv.addEventListener("click", (e) => { if (e.target === panelOv) closePanel(); });
+  newOv.addEventListener("click", (e) => { if (e.target === newOv) closeNewDialog(); });
+  schedOv.addEventListener("click", (e) => { if (e.target === schedOv) closeSched(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!newOv.hidden) closeNewDialog();
+    else if (!schedOv.hidden) closeSched();
+    else if (!panelOv.hidden) closePanel();
+  });
+
+  document.getElementById("chips").addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    filter = btn.dataset.f;
+    document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c === btn));
+    render();
+  });
+
+  document.getElementById("q").addEventListener("input", (e) => {
+    query = e.target.value.trim();
+    render();
+  });
+
+  document.getElementById("reset").addEventListener("click", () => {
+    const sheet = active();
+    if (!sheet) return;
+    if (confirm('"' + sheet.name + '" 체크표의 모든 체크를 해제할까요?')) {
+      sheet.checks = {};
+      save();
+      render();
+    }
+  });
+
+  render();
+</script>
