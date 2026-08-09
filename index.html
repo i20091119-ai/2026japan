@@ -169,6 +169,21 @@
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
   }
+  .sched-btn {
+    flex: none;
+    border: 1px solid var(--boy);
+    background: var(--boy-soft);
+    color: var(--boy);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sched-btn:focus-visible { outline: 2px solid var(--boy); outline-offset: 2px; }
 
   .bar {
     max-width: 640px;
@@ -490,6 +505,61 @@
   .si-del:focus-visible { outline: 2px solid var(--danger); outline-offset: 1px; }
   .panel-empty { text-align: center; color: var(--sub); font-size: 13.5px; padding: 32px 0; }
 
+  .sd-day {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 2px 8px;
+  }
+  .sd-day-title { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .sd-today {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--done);
+    background: var(--done-soft);
+    border: 1px solid var(--done);
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .sd-day-route { font-size: 11.5px; color: var(--sub); font-weight: 500; margin-left: auto; }
+  .sd-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 8px 9px 12px;
+    margin-bottom: 5px;
+    box-shadow: var(--shadow);
+  }
+  .sd-time {
+    flex: none;
+    width: 42px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--sub);
+    font-variant-numeric: tabular-nums;
+  }
+  .sd-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+  .sd-sub { display: block; font-size: 11px; font-weight: 500; color: var(--sub); }
+  .sd-add {
+    flex: none;
+    border: 1px solid var(--done);
+    background: var(--done-soft);
+    color: var(--done);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sd-add:focus-visible { outline: 2px solid var(--boy); outline-offset: 1px; }
+  .sd-note { font-size: 11.5px; color: var(--sub); text-align: center; padding: 12px 0 4px; line-height: 1.5; white-space: pre-line; }
+
   .dialog-wrap { align-items: center; padding: 16px; }
   .dialog {
     width: 100%;
@@ -585,6 +655,7 @@
       <span class="s-name none" id="sName">체크표 없음</span>
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
+    <button id="schedBtn" class="sched-btn" type="button">일정</button>
     <button id="newBtn" class="new-btn" type="button">＋ 새 체크표</button>
   </div>
   <div class="bar"><i id="bar"></i></div>
@@ -615,6 +686,16 @@
       <button class="panel-close" id="panelClose" type="button">닫기</button>
     </div>
     <div class="panel-body" id="sheetList"></div>
+  </div>
+</div>
+
+<div class="overlay" id="schedOv" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-label="여행 일정">
+    <div class="panel-head">
+      <div class="panel-title">여행 일정 <span style="font-weight:500;font-size:12px;color:var(--sub)">8/10~8/12 · 숙소: 빌라 퐁텐 그랜드 아리아케</span></div>
+      <button class="panel-close" id="schedClose" type="button">닫기</button>
+    </div>
+    <div class="panel-body" id="schedList"></div>
   </div>
 </div>
 
@@ -657,6 +738,51 @@
   ];
 
   const PRESETS = ["아침 점호", "저녁 점호", "식사", "버스 탑승", "집합", "숙소 복귀"];
+
+  // 여행 일정 (2026 영재교육원 해외현장체험학습 일정표 기준)
+  // 항목: [시간, 체크표용 이름, 부가 설명(없으면 null)]
+  const ITINERARY = [
+    {
+      date: "2026-08-10", day: "제1일", route: "창녕 → 부산 → 나리타 → 도쿄",
+      items: [
+        ["05:00", "교육지원청 집결", "공항으로 이동 (1시간)"],
+        ["06:00", "김해공항 출국 수속", null],
+        ["07:55", "김해공항 출발", "LJ221 · 비행 2시간"],
+        ["10:05", "나리타 입국 수속", "도쿄로 이동 (1시간)"],
+        ["12:30", "중식", null],
+        ["13:30", "국립과학박물관", null],
+        ["15:00", "아사쿠사", "센소지 · 나카미세도리"],
+        ["16:00", "스카이트리 전망대", "오다이바 문화탐방"],
+        ["17:30", "석식", "후 호텔로 이동"],
+        ["19:30", "호텔 체크인", "휴식"],
+      ],
+    },
+    {
+      date: "2026-08-11", day: "제2일", route: "도쿄 (디즈니랜드)",
+      items: [
+        ["08:00", "호텔 조식", null],
+        ["09:00", "디즈니랜드 이동", null],
+        ["09:30", "디즈니랜드 입장", "조별 자유 투어"],
+        ["17:00", "디즈니랜드 퇴장", "아키하바라로 이동"],
+        ["18:00", "석식", null],
+        ["19:30", "호텔 복귀", "투숙 및 휴식"],
+      ],
+    },
+    {
+      date: "2026-08-12", day: "제3일", route: "도쿄 → 나리타 → 김해 → 창녕",
+      items: [
+        ["08:00", "호텔 조식", "후 이동"],
+        ["09:00", "도쿄대 캠퍼스 투어", "한국인 재학생 안내"],
+        ["10:30", "국립박물관 동양관", "창녕지역 유물 관람"],
+        ["12:30", "중식", null],
+        ["14:00", "나리타공항 이동", "1시간 소요"],
+        ["17:10", "나리타공항 출발", "비행 2시간 40분"],
+        ["18:55", "김해공항 입국 수속", null],
+        ["19:40", "창녕으로 이동", "1시간 소요"],
+        ["20:40", "영재교육원 도착", "해산"],
+      ],
+    },
+  ];
   const KEY = "invention-attendance-v2";
 
   let db = { sheets: [], activeId: null };
@@ -858,8 +984,77 @@
     });
   }
 
+  function renderSchedule() {
+    const box = document.getElementById("schedList");
+    box.innerHTML = "";
+    const today = todayStr();
+    let todayHead = null;
+
+    ITINERARY.forEach((day) => {
+      const isToday = day.date === today;
+      const head = document.createElement("div");
+      head.className = "sd-day";
+      head.innerHTML =
+        '<span class="sd-day-title">' + day.day + " · " + fmtDate(day.date) + "</span>" +
+        (isToday ? '<span class="sd-today">오늘</span>' : "") +
+        '<span class="sd-day-route">' + day.route + "</span>";
+      box.appendChild(head);
+      if (isToday) todayHead = head;
+
+      day.items.forEach(([time, name, sub]) => {
+        const row = document.createElement("div");
+        row.className = "sd-item";
+
+        const info = document.createElement("span");
+        info.className = "sd-name";
+        info.textContent = name;
+        if (sub) {
+          const s = document.createElement("span");
+          s.className = "sd-sub";
+          s.textContent = sub;
+          info.appendChild(s);
+        }
+
+        const t = document.createElement("span");
+        t.className = "sd-time";
+        t.textContent = time;
+
+        const add = document.createElement("button");
+        add.type = "button";
+        add.className = "sd-add";
+        add.textContent = "＋ 체크";
+        add.setAttribute("aria-label", name + " 체크표 만들기");
+        add.addEventListener("click", () => {
+          createSheet(name);
+          closeSched();
+          closePanel();
+          render();
+        });
+
+        row.appendChild(t);
+        row.appendChild(info);
+        row.appendChild(add);
+        box.appendChild(row);
+      });
+    });
+
+    const note = document.createElement("div");
+    note.className = "sd-note";
+    note.textContent = "＋ 체크를 누르면 그 일정 이름으로 새 체크표가 만들어집니다.\n현지 사정과 교육청 협의에 의해 일정이 변경될 수 있습니다.";
+    box.appendChild(note);
+
+    if (todayHead) requestAnimationFrame(() => todayHead.scrollIntoView({ block: "start" }));
+  }
+
   const panelOv = document.getElementById("panelOv");
   const newOv = document.getElementById("newOv");
+  const schedOv = document.getElementById("schedOv");
+
+  function openSched() {
+    renderSchedule();
+    schedOv.hidden = false;
+  }
+  function closeSched() { schedOv.hidden = true; }
 
   function openPanel() {
     renderSheetList();
@@ -904,11 +1099,15 @@
   document.getElementById("newBtn").addEventListener("click", openNewDialog);
   document.getElementById("sheetBtn").addEventListener("click", openPanel);
   document.getElementById("panelClose").addEventListener("click", closePanel);
+  document.getElementById("schedBtn").addEventListener("click", openSched);
+  document.getElementById("schedClose").addEventListener("click", closeSched);
   panelOv.addEventListener("click", (e) => { if (e.target === panelOv) closePanel(); });
   newOv.addEventListener("click", (e) => { if (e.target === newOv) closeNewDialog(); });
+  schedOv.addEventListener("click", (e) => { if (e.target === schedOv) closeSched(); });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!newOv.hidden) closeNewDialog();
+    else if (!schedOv.hidden) closeSched();
     else if (!panelOv.hidden) closePanel();
   });
 
