@@ -92,6 +92,13 @@
 - 수정 후 아티팩트 갱신은 Claude 세션에서 `index.html`을 다시 게시하면 같은 URL로 반영됨
 - 저장 데이터를 전부 초기화하려면 `KEY` 상수(`invention-attendance-v2`)의 버전을 올리면 됨 (모든 체크표가 사라지므로 주의 — 개별 체크표는 앱의 기록 목록에서 삭제 가능)
 
+## 웹 배포 (GitHub Pages)
+
+- 공개 주소: https://i20091119-ai.github.io/2026japan/ (로그인 불필요)
+- 작업 브랜치에 푸시할 때마다 GitHub Actions(`.github/workflows/pages.yml`)가 `index.html`을 `gh-pages` 브랜치로 자동 게시함
+- **최초 1회 활성화 필요**: 저장소 Settings → Pages → Source "Deploy from a branch" → Branch `gh-pages` / `/ (root)` → Save. 이후에는 전부 자동
+- 배포 페이지에는 검색엔진 수집 방지(noindex) 태그가 있으나, 저장소가 공개이므로 URL을 아는 사람은 누구나 볼 수 있음 — 링크는 인솔자에게만 공유할 것
+
 ## 저장소 정보
 
 - 저장소: `i20091119-ai/2026japan`
