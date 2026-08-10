@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>초등발명반 출석 체크</title>
+<title>초등부 출석 체크</title>
 <style>
   :root {
     --bg: #F6F7F9;
@@ -209,7 +209,7 @@
     margin: 0 auto;
     align-items: center;
   }
-  .chips { display: flex; gap: 6px; flex: 1; }
+  .chips { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
   .chip {
     border: 1px solid var(--line);
     background: var(--chip-bg);
@@ -647,7 +647,7 @@
 
 <header class="top">
   <div class="top-row">
-    <h1>초등발명반 출석 체크<small>해외체험학습 8/10~8/12 · 1호차</small></h1>
+    <h1>초등부 출석 체크<small>발명 20 · 수과 19 · 8/10~8/12 · 1호차</small></h1>
     <div class="count"><span id="n">0</span><span class="total">/<span id="t">0</span></span></div>
   </div>
   <div class="sheet-row">
@@ -664,6 +664,8 @@
     <div class="chips" id="chips">
       <button class="chip on" data-f="all" type="button">전체</button>
       <button class="chip" data-f="todo" type="button">미확인</button>
+      <button class="chip" data-f="inv" type="button">발명</button>
+      <button class="chip" data-f="ms" type="button">수과</button>
       <button class="chip" data-f="boy" type="button">남</button>
       <button class="chip" data-f="girl" type="button">여</button>
     </div>
@@ -714,28 +716,49 @@
 </div>
 
 <script>
-  // [이름, 학교, 학년, 방번호, 성별, 룸메이트가 수학과학반인 경우 그 이름]
+  // [이름, 학교(모르면 null), 학년(모르면 null), 방번호(모르면 null), 성별("boy"/"girl"/모르면 "na"), 반("inv" 발명 / "ms" 수학과학)]
+  // 발명반 20명: 방 배정 명단표 기준. 수학과학반 19명: 여름방학 프로젝트 수업 계획 기준
+  // (방 번호는 발명반 룸메이트 정보로 확인된 4명만 기재, 나머지는 null → "방 미확인" 그룹)
   const STUDENTS = [
-    ["김강현", "창녕초", "초5", 705, "boy", null],
-    ["김범준", "창녕초", "초5", 705, "boy", null],
-    ["우주원", "창녕초", "초5", 707, "boy", "조정민"],
-    ["서진",   "창녕초", "초6", 709, "boy", null],
-    ["조찬우", "창녕초", "초6", 709, "boy", null],
-    ["황현종", "창녕초", "초6", 711, "boy", null],
-    ["빈서진", "창녕초", "초6", 711, "boy", null],
-    ["함진우", "창녕초", "초6", 713, "boy", "김민찬"],
-    ["정우빈", "명덕초", "초6", 715, "boy", null],
-    ["최승빈", "명덕초", "초6", 715, "boy", null],
-    ["황태준", "명덕초", "초6", 721, "boy", "김민재"],
-    ["김세은", "창녕초", "초5", 801, "girl", null],
-    ["김연아", "창녕초", "초5", 801, "girl", null],
-    ["강다영", "남지초", "초6", 807, "girl", null],
-    ["박윤진", "남지초", "초6", 807, "girl", null],
-    ["김지우", "창녕초", "초6", 809, "girl", null],
-    ["임현서", "창녕초", "초6", 809, "girl", null],
-    ["박서율", "이방초", "초6", 811, "girl", "나연서"],
-    ["최윤서", "창녕초", "초6", 813, "girl", null],
-    ["김연지", "영산초", "초6", 813, "girl", null],
+    ["김강현", "창녕초", "초5", 705, "boy", "inv"],
+    ["김범준", "창녕초", "초5", 705, "boy", "inv"],
+    ["우주원", "창녕초", "초5", 707, "boy", "inv"],
+    ["조정민", null, null, 707, "boy", "ms"],
+    ["서진",   "창녕초", "초6", 709, "boy", "inv"],
+    ["조찬우", "창녕초", "초6", 709, "boy", "inv"],
+    ["황현종", "창녕초", "초6", 711, "boy", "inv"],
+    ["빈서진", "창녕초", "초6", 711, "boy", "inv"],
+    ["함진우", "창녕초", "초6", 713, "boy", "inv"],
+    ["김민찬", null, null, 713, "boy", "ms"],
+    ["정우빈", "명덕초", "초6", 715, "boy", "inv"],
+    ["최승빈", "명덕초", "초6", 715, "boy", "inv"],
+    ["황태준", "명덕초", "초6", 721, "boy", "inv"],
+    ["김민재", null, null, 721, "boy", "ms"],
+    ["김세은", "창녕초", "초5", 801, "girl", "inv"],
+    ["김연아", "창녕초", "초5", 801, "girl", "inv"],
+    ["강다영", "남지초", "초6", 807, "girl", "inv"],
+    ["박윤진", "남지초", "초6", 807, "girl", "inv"],
+    ["김지우", "창녕초", "초6", 809, "girl", "inv"],
+    ["임현서", "창녕초", "초6", 809, "girl", "inv"],
+    ["박서율", "이방초", "초6", 811, "girl", "inv"],
+    ["나연서", null, null, 811, "girl", "ms"],
+    ["최윤서", "창녕초", "초6", 813, "girl", "inv"],
+    ["김연지", "영산초", "초6", 813, "girl", "inv"],
+    ["강유진", null, null, null, "na", "ms"],
+    ["강지후", null, null, null, "na", "ms"],
+    ["김도영", null, null, null, "na", "ms"],
+    ["김민결", null, null, null, "na", "ms"],
+    ["김민준", null, null, null, "na", "ms"],
+    ["김태연", null, null, null, "na", "ms"],
+    ["박범준", null, null, null, "na", "ms"],
+    ["박시윤", null, null, null, "na", "ms"],
+    ["신유현", null, null, null, "na", "ms"],
+    ["이재중", null, null, null, "na", "ms"],
+    ["정은호", null, null, null, "na", "ms"],
+    ["조나라", null, null, null, "na", "ms"],
+    ["차은유", null, null, null, "na", "ms"],
+    ["최준우", null, null, null, "na", "ms"],
+    ["황지우", null, null, null, "na", "ms"],
   ];
 
   const PRESETS = ["아침 점호", "저녁 점호", "식사", "버스 탑승", "집합", "숙소 복귀"];
@@ -864,10 +887,11 @@
     footEl.style.display = "";
 
     const state = sheet.checks;
-    const visible = STUDENTS.filter(([name, , , , sex]) => {
+    const visible = STUDENTS.filter(([name, , , , sex, cls]) => {
       if (query && !name.includes(query)) return false;
       if (filter === "todo") return !state[name];
       if (filter === "boy" || filter === "girl") return sex === filter;
+      if (filter === "inv" || filter === "ms") return cls === filter;
       return true;
     });
 
@@ -875,8 +899,8 @@
       listEl.innerHTML = '<div class="empty">해당하는 학생이 없습니다</div>';
     }
 
-    let currentRoom = null;
-    visible.forEach(([name, school, grade, room, sex, roommate]) => {
+    let currentRoom = "__none__";
+    visible.forEach(([name, school, grade, room, sex, cls]) => {
       if (room !== currentRoom) {
         currentRoom = room;
         const roomStudents = STUDENTS.filter((s) => s[3] === room);
@@ -884,12 +908,19 @@
         const head = document.createElement("div");
         head.className = "room-head " + sex;
         head.innerHTML =
-          '<span class="room-num">' + room + "호</span>" +
-          '<span class="room-meta">' + (sex === "boy" ? "7층 · 남" : "8층 · 여") + "</span>" +
+          (room
+            ? '<span class="room-num">' + room + "호</span>" +
+              '<span class="room-meta">' + (sex === "boy" ? "7층 · 남" : "8층 · 여") + "</span>"
+            : '<span class="room-num">수학과학반</span>' +
+              '<span class="room-meta">방 미확인</span>') +
           '<span class="room-count' + (done === roomStudents.length ? " full" : "") + '">' +
           done + "/" + roomStudents.length + "</span>";
         listEl.appendChild(head);
       }
+
+      const detail = cls === "ms"
+        ? "수학과학반" + (room ? " · " + room + "호" : "")
+        : school + " · " + grade + " · " + room + "호";
 
       const card = document.createElement("button");
       card.type = "button";
@@ -898,8 +929,7 @@
       card.innerHTML =
         '<span class="tick"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
         '<span class="info"><span class="name">' + name + "</span>" +
-        (roommate ? '<span class="badge mixed">룸메이트 ' + roommate + '(수학과학반)</span>' : "") +
-        '<div class="detail">' + school + " · " + grade + " · " + room + "호</div></span>" +
+        '<div class="detail">' + detail + "</div></span>" +
         (state[name] ? '<span class="time">' + fmtTime(state[name]) + "</span>" : "");
       card.addEventListener("click", () => {
         if (state[name]) delete state[name];
