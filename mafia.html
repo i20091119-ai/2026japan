@@ -86,6 +86,7 @@
   ul.players li.maf { border-color: var(--blood); }
   .tag { flex: none; font-size: 11px; font-weight: 700; color: var(--dim); }
   .tag.red { color: var(--blood); }
+  .tag.ok, .headline em.ok { color: var(--ok); }
 
   .choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .choices button { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -109,10 +110,10 @@
   <!-- 첫 화면: 방 만들기 / 참가 -->
   <section id="home" class="col">
     <h1>마피아 게임</h1>
-    <p class="dim">7명이 각자 폰으로 접속합니다. 마피아는 2명. 밤에는 마피아끼리 회의해서 한 명을 정하고, 결과는 모두의 화면에 뜹니다.</p>
+    <p class="dim">7명이 각자 폰으로 접속합니다. 마피아 2명, 의사 1명. 밤에는 마피아끼리 회의해서 한 명을 정하고 의사는 한 명을 살립니다. 결과는 모두의 화면에 뜹니다.</p>
     <div class="card col">
-      <label for="name">내 이름</label>
-      <input id="name" type="text" maxlength="10" placeholder="이름" autocomplete="off">
+      <label for="name">닉네임</label>
+      <input id="name" type="text" maxlength="10" placeholder="게임에서 쓸 닉네임" autocomplete="off">
     </div>
     <div class="card col">
       <h2>방 참가</h2>
@@ -183,7 +184,7 @@
   let H = null;          // 방장만 가지는 전체 상태
   let chat = [], picks = {}, picksFor = "";
   let curM = null, joined = false, kicked = false, connected = false;
-  let lastStateAt = 0, sel = null, execSel = null, lastKey = "", timers = [];
+  let healed = null, lastStateAt = 0, sel = null, execSel = null, lastKey = "", timers = [];
 
   /* ---------- 연결 ---------- */
   function connect(url) {
@@ -259,7 +260,7 @@
       pub = m; lastStateAt = Date.now();
       if (prevGame !== pub.game) { chat = []; sel = execSel = null; $("log").innerHTML = ""; }
       const k = pub.game + ":" + pub.round;
-      if (picksFor !== k) { picksFor = k; picks = {}; sel = execSel = null; }
+      if (picksFor !== k) { picksFor = k; picks = {}; sel = execSel = healed = null; }
       if (inGame()) joined = true;
       else if (joined && pub.phase === "lobby" && !me.isHost) { joined = false; kicked = true; }
       render();
@@ -321,8 +322,12 @@
   function hostOn(m) {
     const p = H.players.find(p => p.id === m.id);
     if (m.t === "hello") { hostPublish(); if (p && p.key === m.key) sendRole(p); }
+    if (m.t === "save" && p && p.key === m.key && p.role === "doctor" && p.alive && H.phase === "night" && m.round === H.round) {
+      const t = H.players.find(q => q.id === m.target);
+      if (t && t.alive) { H.save = t.id; hostResolve(); }
+    }
     if (m.t === "join" && H.phase === "lobby") {
-      const name = String(m.name || "").trim().slice(0, 10) || "이름없음";
+      const name = String(m.name || "").trim().slice(0, 10) || "닉네임없음";
       if (p) { if (p.key === m.key) p.name = name; }
       else if (H.players.length < MAX) H.players.push({ id: String(m.id), key: String(m.key), name, alive: true, role: null });
       hostPublish();
@@ -336,8 +341,8 @@
       const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
       [idx[i], idx[j]] = [idx[j], idx[i]];
     }
-    H.players.forEach((p, i) => { p.alive = true; p.role = idx.indexOf(i) < MAFIA ? "mafia" : "citizen"; });
-    Object.assign(H, { game: H.game + 1, mkey: rand(16), phase: "night", round: 1, picks: {}, lastKilled: null, lastExecuted: null, winner: null });
+    H.players.forEach((p, i) => { p.alive = true; const r = idx.indexOf(i); p.role = r < MAFIA ? "mafia" : r === MAFIA ? "doctor" : "citizen"; });
+    Object.assign(H, { game: H.game + 1, mkey: rand(16), phase: "night", round: 1, picks: {}, kill: null, save: null, lastKilled: null, lastExecuted: null, winner: null });
     subM(H.mkey);
     sendRoles(); hostPublish();
   }
@@ -349,14 +354,22 @@
     return !!H.winner;
   }
   function hostPick(m) {
-    if (H.phase !== "night" || m.round !== H.round) return;
+    if (H.phase !== "night" || m.round !== H.round || H.kill) return;
     const from = H.players.find(p => p.id === m.from), target = H.players.find(p => p.id === m.target);
     if (!from || !target || !from.alive || from.role !== "mafia" || !target.alive || target.role === "mafia") return;
     H.picks[from.id] = target.id;
     const alive = H.players.filter(p => p.alive && p.role === "mafia");
     if (!alive.every(p => H.picks[p.id] === target.id)) return;
-    target.alive = false;
-    H.lastKilled = target.id; H.picks = {};
+    H.kill = target.id;
+    hostResolve();
+  }
+  // 마피아의 결정과 (살아 있다면) 의사의 선택이 모두 모이면 밤이 끝난다
+  function hostResolve() {
+    if (H.phase !== "night" || !H.kill) return;
+    if (H.players.some(p => p.alive && p.role === "doctor") && !H.save) return;
+    if (H.save === H.kill) H.lastKilled = "none";
+    else { H.players.find(p => p.id === H.kill).alive = false; H.lastKilled = H.kill; }
+    H.kill = H.save = null; H.picks = {};
     if (!hostWin()) H.phase = "day";
     hostPublish();
   }
@@ -365,12 +378,12 @@
     const p = id && H.players.find(p => p.id === id);
     if (p) p.alive = false;
     H.lastExecuted = p ? p.id : "none";
-    if (!hostWin()) { H.phase = "night"; H.round++; H.picks = {}; }
+    if (!hostWin()) { H.phase = "night"; H.round++; H.picks = {}; H.kill = H.save = null; }
     hostPublish();
   }
   function hostNewGame() {
     H.players.forEach(p => { p.alive = true; p.role = null; });
-    Object.assign(H, { game: H.game + 1, phase: "lobby", round: 0, mkey: null, picks: {}, lastKilled: null, lastExecuted: null, winner: null });
+    Object.assign(H, { game: H.game + 1, phase: "lobby", round: 0, mkey: null, picks: {}, kill: null, save: null, lastKilled: null, lastExecuted: null, winner: null });
     subM(null);
     sendRoles(); hostPublish();
   }
@@ -383,6 +396,7 @@
       if (p.id === me.id) tags.push('<span class="tag">나</span>');
       if (p.id === pub.hostId) tags.push('<span class="tag">방장</span>');
       if (maf) tags.push('<span class="tag red">마피아</span>');
+      if (opts.roles && opts.roles[p.id] === "doctor") tags.push('<span class="tag ok">의사</span>');
       if (!p.alive) tags.push('<span class="tag">사망</span>');
       if (opts.kick && p.id !== me.id) tags.push('<button class="small" data-act="kick" data-id="' + esc(p.id) + '" type="button">내보내기</button>');
       return '<li class="' + (p.alive ? "" : "dead ") + (maf ? "maf" : "") + '"><span class="nm">' + esc(p.name) + "</span>" + tags.join("") + "</li>";
@@ -397,7 +411,7 @@
     if (!me) return;
     const stale = !me.isHost && pub && Date.now() - lastStateAt > 16000;
     const noRoom = !me.isHost && !pub && Date.now() - lastStateAt > 7000;
-    const key = JSON.stringify([pub && { ...pub, ts: 0 }, role, sel, execSel, connected, stale, noRoom, kicked, picks]);
+    const key = JSON.stringify([pub && { ...pub, ts: 0 }, role, sel, execSel, healed, connected, stale, noRoom, kicked, picks]);
     if (key === lastKey) return;
     lastKey = key;
 
@@ -440,8 +454,8 @@
       if (pub.round > 1) h += '<p class="dim">낮 투표 결과: ' + (pub.lastExecuted === "none" ? "처형 없음" : esc(nameOf(pub.lastExecuted)) + " 처형") + "</p>";
       if (isMod()) {
         const maf = H.players.filter(p => p.role === "mafia");
-        h += '<div class="headline">마피아는 <em>' + maf.map(p => esc(p.name)).join(", ") + "</em></div></div>" +
-          '<p class="dim">마피아가 회의 중입니다. 살아 있는 마피아가 같은 사람을 지목하면 낮으로 넘어갑니다.</p>' +
+        h += '<div class="headline">마피아는 <em>' + maf.map(p => esc(p.name)).join(", ") + "</em></div><p>의사: <b>" + H.players.filter(p => p.role === "doctor").map(p => esc(p.name)).join(", ") + "</b></p></div>" +
+          '<p class="dim">마피아가 같은 사람을 확정하고 의사가 살릴 사람을 고르면 낮으로 넘어갑니다.</p>' +
           playerList({ roles: Object.fromEntries(H.players.map(p => [p.id, p.role])) });
       } else if (mine === "mafia") {
         const mates = (role.mates || []).map(nameOf).map(esc).join(", ");
@@ -451,9 +465,18 @@
           h += '<div class="card col"><p>오늘 밤 죽일 사람</p>' + choices(targets, sel, "sel") +
             '<button class="primary" data-act="pick" type="button"' + (sel ? "" : " disabled") + ">이 사람으로 확정</button>" +
             '<p class="dim">' + (picks[me.id] ? "내 지목: " + esc(nameOf(picks[me.id])) + ". " : "") +
-            "살아 있는 마피아가 모두 같은 사람을 확정하면 결정됩니다.</p></div>";
+            "살아 있는 마피아가 모두 같은 사람을 확정하면 결정됩니다. 의사가 그 사람을 살리면 아무도 죽지 않습니다.</p></div>";
         } else {
           h += '<p class="dim">당신은 사망했습니다. 회의는 볼 수만 있습니다.</p>';
+        }
+      } else if (mine === "doctor") {
+        h += '<div class="headline">당신은 <em class="ok">의사</em>입니다</div></div>';
+        if (meP.alive) {
+          h += '<div class="card col"><p>오늘 밤 살릴 사람 (나 자신도 가능)</p>' + choices(alive, sel, "sel") +
+            '<button class="primary" data-act="save" type="button"' + (sel ? "" : " disabled") + ">이 사람을 살린다</button>" +
+            '<p class="dim">' + (healed ? "선택 완료: " + esc(nameOf(healed)) + ". 밤이 끝나기 전까지 바꿀 수 있습니다." : "마피아가 고른 사람과 같으면 그 사람은 죽지 않습니다. 선택해야 밤이 끝납니다.") + "</p></div>";
+        } else {
+          h += '<p class="dim">당신은 사망했습니다. 조용히 지켜보세요.</p>' + playerList();
         }
       } else {
         h += '<div class="headline">당신은 시민입니다</div></div>' +
@@ -462,7 +485,9 @@
       }
     } else if (pub.phase === "day") {
       h = '<div class="col"><span class="phase">' + pub.round + "번째 낮</span>" +
-        '<div class="headline">지난 밤 <em>' + esc(nameOf(pub.lastKilled)) + "</em> 님이 죽었습니다</div></div>" +
+        '<div class="headline">' + (pub.lastKilled === "none" ? "지난 밤 <em class=\"ok\">아무도 죽지 않았습니다</em>"
+          : "지난 밤 <em>" + esc(nameOf(pub.lastKilled)) + "</em> 님이 죽었습니다") + "</div></div>" +
+        (pub.lastKilled === "none" ? '<p class="dim">의사가 마피아의 표적을 살렸습니다.</p>' : "") +
         '<p class="dim">누가 마피아인지 토론하고 투표하세요.</p>' + playerList();
       if (me.isHost) {
         h += '<div class="card col"><p>투표 결과 입력 (방장)</p>' + choices(alive, execSel, "exec") +
@@ -485,6 +510,7 @@
     if (act === "sel") { sel = id; render(); }
     else if (act === "exec") { execSel = execSel === id ? null : id; render(); }
     else if (act === "pick" && sel && curM) send(base + "/m/" + curM, { t: "pick", from: me.id, target: sel, round: pub.round });
+    else if (act === "save" && sel) { send(base + "/host", { t: "save", id: me.id, key: me.key, target: sel, round: pub.round }); healed = sel; render(); }
     else if (act === "rejoin") { kicked = false; tick(); }
     else if (!me.isHost) return;
     else if (act === "start") hostStart();
@@ -512,7 +538,7 @@
   /* ---------- 첫 화면 ---------- */
   function myName() {
     const n = $("name").value.trim().slice(0, 10);
-    if (!n) { $("homeMsg").hidden = false; $("homeMsg").textContent = "이름을 먼저 입력하세요."; $("name").focus(); return null; }
+    if (!n) { $("homeMsg").hidden = false; $("homeMsg").textContent = "닉네임을 먼저 입력하세요."; $("name").focus(); return null; }
     store.set("mafia-name", n);
     return n;
   }
